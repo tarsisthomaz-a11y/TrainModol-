@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treino App</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0d;--bg2:#1a1a1a;--bg3:#242424;--border:#2e2e2e;
+  --text:#f0f0f0;--muted:#888;--accent:#f97316;--accent2:#ea580c;
+  --green:#22c55e;--red:#ef4444;--blue:#3b82f6;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;border:none;outline:none}
+
+/* LAYOUT */
+.app{max-width:480px;margin:0 auto;padding-bottom:80px}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:12px}
+header .back-btn{width:36px;height:36px;background:var(--bg3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;display:none}
+header h1{font-size:18px;font-weight:700;flex:1}
+header .streak{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--accent);font-weight:600}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg2);border-top:1px solid var(--border);display:flex}
+.nav-btn{flex:1;padding:12px 0;background:none;color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s}
+.nav-btn.active,.nav-btn:hover{color:var(--accent)}
+.nav-btn svg{width:20px;height:20px}
+
+/* PAGES */
+.page{display:none;padding:16px}
+.page.active{display:block}
+
+/* HOME PAGE */
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.stat-card .val{font-size:24px;font-weight:700;color:var(--accent)}
+.stat-card .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+
+.section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+
+.today-card{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:14px;padding:18px;margin-bottom:20px;cursor:pointer;transition:transform .15s,opacity .15s}
+.today-card:hover{transform:scale(1.01)}
+.today-card .tc-label{font-size:12px;opacity:.8;margin-bottom:4px}
+.today-card .tc-title{font-size:20px;font-weight:700;margin-bottom:2px}
+.today-card .tc-sub{font-size:13px;opacity:.8}
+.today-card .tc-progress{margin-top:12px}
+.today-card .tc-progress-bar{background:rgba(0,0,0,.2);border-radius:99px;height:6px;margin-top:6px;overflow:hidden}
+.today-card .tc-progress-fill{height:100%;background:#fff;border-radius:99px;transition:width .4s}
+
+.plan-select-btn{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:border-color .2s,background .2s;width:100%}
+.plan-select-btn:hover,.plan-select-btn.active{border-color:var(--accent);background:var(--bg3)}
+.plan-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.plan-select-btn .info{flex:1;text-align:left}
+.plan-select-btn .info .name{font-size:14px;font-weight:600}
+.plan-select-btn .info .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.plan-select-btn .arrow{color:var(--muted);font-size:16px}
+
+/* TREINO PAGE */
+.day-selector{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;scrollbar-width:none}
+.day-selector::-webkit-scrollbar{display:none}
+.day-pill{flex-shrink:0;padding:8px 16px;border-radius:99px;background:var(--bg2);border:1px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap}
+.day-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.day-pill.done{background:var(--bg3);border-color:var(--green);color:var(--green)}
+.day-pill.rest{color:var(--muted);font-style:italic}
+
+.day-header{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+.day-header h2{font-size:18px;font-weight:700;margin-bottom:4px}
+.day-header .rest-info{font-size:12px;color:var(--muted);margin-bottom:12px}
+.progress-bar{background:var(--bg3);border-radius:99px;height:8px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
+.progress-label{font-size:12px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between}
+
+.exercise-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden;transition:border-color .2s}
+.exercise-card.checked{border-color:var(--green)}
+.ex-main{display:flex;align-items:center;gap:12px;padding:14px}
+.ex-check{width:24px;height:24px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .2s;background:var(--bg3)}
+.ex-check.checked{background:var(--green);border-color:var(--green)}
+.ex-check svg{width:14px;height:14px;stroke:#fff;stroke-width:2.5;fill:none;display:none}
+.ex-check.checked svg{display:block}
+.ex-info{flex:1}
+.ex-name{font-size:14px;font-weight:600;line-height:1.3}
+.ex-meta{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.ex-badge{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--bg3);color:var(--muted);border:1px solid var(--border)}
+.ex-badge.sets{color:var(--accent);border-color:rgba(249,115,22,.3);background:rgba(249,115,22,.1)}
+.ex-badge.cardio{color:var(--blue);border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.1)}
+.ex-expand{padding:0 14px 14px;border-top:1px solid var(--border);display:none}
+.ex-expand .note{font-size:12px;color:var(--muted);padding-top:10px;line-height:1.5}
+.exercise-card.expanded .ex-expand{display:block}
+
+.rest-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;padding:14px;display:flex;align-items:center;gap:12px;font-style:italic;color:var(--muted)}
+
+.complete-btn{width:100%;padding:16px;border-radius:14px;background:var(--accent);color:#fff;font-size:16px;font-weight:700;margin-top:16px;transition:background .2s,transform .1s}
+.complete-btn:hover{background:var(--accent2)}
+.complete-btn:active{transform:scale(.98)}
+.complete-btn:disabled{background:var(--green);cursor:default}
+
+/* REST TIMER */
+.timer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:200;display:none}
+.timer-overlay.show{display:flex}
+.timer-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px;text-align:center;min-width:280px}
+.timer-box h3{font-size:14px;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:.05em}
+.timer-circle{width:140px;height:140px;border-radius:50%;border:4px solid var(--border);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;position:relative;font-size:42px;font-weight:700;background:var(--bg3)}
+.timer-circle .ring{position:absolute;inset:-4px;border-radius:50%}
+.timer-btns{display:flex;gap:10px;justify-content:center;margin-top:16px}
+.timer-btns button{padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600}
+.btn-start{background:var(--accent);color:#fff}
+.btn-skip{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+
+/* HISTORY PAGE */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-nav{background:var(--bg2);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--text);font-size:16px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px}
+.cal-day-hdr{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--bg2);position:relative}
+.cal-day.today{border:1px solid var(--accent);color:var(--accent);font-weight:700}
+.cal-day.worked{background:rgba(249,115,22,.15);color:var(--accent)}
+.cal-day.worked::after{content:'';width:5px;height:5px;background:var(--accent);border-radius:50%;position:absolute;bottom:3px;left:50%;transform:translateX(-50%)}
+.cal-day.rest-day{background:rgba(59,130,246,.1);color:var(--blue)}
+.cal-day.other-month{opacity:.3}
+
+.history-list{}
+.hist-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px}
+.hist-item .hi-date{font-size:12px;color:var(--muted)}
+.hist-item .hi-name{font-size:15px;font-weight:600;margin-top:2px}
+.hist-item .hi-stats{display:flex;gap:10px;margin-top:6px}
+.hist-item .hi-badge{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--bg3);color:var(--muted)}
+
+/* PLAN PICKER MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:150;display:none;align-items:flex-end}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--bg2);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto}
+.modal-box h2{font-size:18px;font-weight:700;margin-bottom:16px}
+.modal-close{float:right;background:var(--bg3);border:none;color:var(--text);width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+.cat-tabs{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
+.cat-tab{flex-shrink:0;padding:8px 16px;border-radius:99px;background:var(--bg3);border:1px solid var(--border);font-size:13px;cursor:pointer;transition:all .2s}
+.cat-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .icon{font-size:40px;margin-bottom:12px}
+.empty-state p{font-size:14px;line-height:1.6}
+
+.tag-obs{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);border-radius:10px;padding:12px;font-size:12px;color:var(--accent);margin-bottom:10px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <button class="back-btn" id="backBtn" onclick="goBack()">‹</button>
+  <h1 id="pageTitle">💪 Treino</h1>
+  <div class="streak" id="streakDisplay">🔥 0 dias</div>
+</header>
+
+<!-- HOME -->
+<div class="page active" id="pageHome">
+  <div class="stats-row">
+    <div class="stat-card"><div class="val" id="statStreak">0</div><div class="lbl">Sequência</div></div>
+    <div class="stat-card"><div class="val" id="statWeek">0</div><div class="lbl">Esta semana</div></div>
+    <div class="stat-card"><div class="val" id="statTotal">0</div><div class="lbl">Total</div></div>
+  </div>
+
+  <div id="todayCardWrap"></div>
+
+  <div class="section-title">Meu Plano</div>
+  <div id="planDisplay">
+    <div class="empty-state"><div class="icon">🏋️</div><p>Nenhum plano selecionado.<br>Toque em "Escolher Plano" para começar.</p></div>
+  </div>
+  <button class="plan-select-btn" onclick="openPlanPicker()" style="margin-top:8px;justify-content:center;color:var(--accent);border-color:rgba(249,115,22,.3)">
+    <span>Escolher / Trocar Plano</span>
+  </button>
+</div>
+
+<!-- TREINO -->
+<div class="page" id="pageTreino">
+  <div class="day-selector" id="daySelector"></div>
+  <div id="dayContent"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="page" id="pageHistory">
+  <div class="cal-header">
+    <button class="cal-nav" onclick="calPrev()">‹</button>
+    <span id="calMonth" style="font-weight:600;font-size:15px"></span>
+    <button class="cal-nav" onclick="calNext()">›</button>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="section-title">Histórico</div>
+  <div id="histList"></div>
+</div>
+
+</div><!-- /app -->
+
+<!-- Bottom Nav -->
+<nav class="nav">
+  <button class="nav-btn active" id="navHome" onclick="showPage('Home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Início
+  </button>
+  <button class="nav-btn" id="navTreino" onclick="showPage('Treino')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M2 9h4M18 9h4M2 15h4M18 15h4"/></svg>
+    Treino
+  </button>
+  <button class="nav-btn" id="navHistory" onclick="showPage('History')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Histórico
+  </button>
+</nav>
+
+<!-- Plan Picker Modal -->
+<div class="modal-overlay" id="planModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closePlanPicker()">✕</button>
+    <h2>Escolher Plano</h2>
+    <div class="cat-tabs" id="catTabs"></div>
+    <div id="planList"></div>
+  </div>
+</div>
+
+<!-- Rest Timer Overlay -->
+<div class="timer-overlay" id="timerOverlay">
+  <div class="timer-box">
+    <h3>Descanso</h3>
+    <div class="timer-circle" id="timerDisplay">60</div>
+    <div style="color:var(--muted);font-size:13px" id="timerLabel">Recuperando...</div>
+    <div class="timer-btns">
+      <button class="btn-start" id="timerStartBtn" onclick="toggleTimer()">▶ Iniciar</button>
+      <button class="btn-skip" onclick="closeTimer()">Pular</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const PLANS = [
+{
+  id:'ini1p1', cat:'Iniciante', name:'Iniciante 1 – Parte 1', weeks:'4 semanas',
+  scheduleNote:'Dias 1→2→3 se repetem. Dia 7: descanso.',
+  obs:'Se você veio do módulo de adaptação, vá direto para o Iniciante 1 – Parte 2.',
+  days:[
+    {id:'d1',name:'Dia 1 – Pernas',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Adutora',s:'4',r:'15'},
+      {n:'Cadeira Abdutora',s:'4',r:'15'},
+      {n:'Elevação Pélvica c/ Barra',s:'4',r:'15'},
+      {n:'Cadeira Extensora',s:'4',r:'15'},
+      {n:'Mesa Flexora',s:'4',r:'15'},
+      {n:'Leg Press – Pés Paralelos',s:'4',r:'15'},
+      {n:'Agachamento com Bola',s:'4',r:'15'},
+      {n:'Panturrilha em Pé',s:'4',r:'15'},
+      {n:'Panturrilha Sentado',s:'4',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Banco Reto',s:'3',r:'20'},
+    ]},
+    {id:'d2',name:'Dia 2 – Peito / Braços',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Crucifixo Inclinado c/ Halter',s:'4',r:'15'},
+      {n:'Supino Inclinado no Smith',s:'4',r:'15'},
+      {n:'Supino Reto no Smith',s:'4',r:'15'},
+      {n:'Flexões de Braço no Solo',s:'4',r:'15'},
+      {n:'Rosca Direta c/ Barra W',s:'4',r:'15'},
+      {n:'Rosca Alternada',s:'4',r:'15'},
+      {n:'Rosca Inversa c/ Barra W',s:'3',r:'15'},
+      {n:'Tríceps Pulley Corda',s:'4',r:'15'},
+      {n:'Tríceps Testa',s:'3',r:'15'},
+      {n:'Tríceps Francês Sentado',s:'4',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia 3 – Costas / Ombros',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Puxador Alto Aberto Pegada Pronada',s:'4',r:'15'},
+      {n:'Puxador Alto c/ Triângulo',s:'4',r:'15'},
+      {n:'Remada Curvada Pronada',s:'3',r:'15'},
+      {n:'Remada Unilateral',s:'3',r:'15'},
+      {n:'Remada Baixa c/ Triângulo',s:'4',r:'15'},
+      {n:'Hiperextensão de Lombar',s:'4',r:'15'},
+      {n:'Desenvolvimento Sentado c/ Halter',s:'4',r:'15'},
+      {n:'Elevação Frontal c/ Halter',s:'4',r:'15'},
+      {n:'Elevação Lateral c/ Halter',s:'4',r:'15'},
+      {n:'Crucifixo Máquina Inverso',s:'4',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d4',name:'Dia 4 – Treino Dia 1',repeat:1},
+    {id:'d5',name:'Dia 5 – Treino Dia 2',repeat:2},
+    {id:'d6',name:'Dia 6 – Treino Dia 3',repeat:3},
+    {id:'d7',name:'Dia 7 – Descanso',rest_day:true},
+  ]
+},
+{
+  id:'ini1p2', cat:'Iniciante', name:'Iniciante 1 – Parte 2', weeks:'4–8 semanas',
+  scheduleNote:'Dias 1→2→3 se repetem. Dia 7: descanso.',
+  obs:'Se você veio do módulo adaptação, fique 8 semanas. Se iniciou no Iniciante P1, fique 4 semanas.',
+  days:[
+    {id:'d1',name:'Dia 1 – Pernas',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Adutora',s:'2×15',r:'2×12'},
+      {n:'Cadeira Abdutora',s:'2×15',r:'2×12'},
+      {n:'Elevação Pélvica c/ Barra',s:'3×15',r:'2×12'},
+      {n:'Cadeira Extensora',s:'2×15',r:'2×12'},
+      {n:'Mesa Flexora',s:'3×15',r:'2×12'},
+      {n:'Leg Press – Pés Paralelos',s:'2×15',r:'2×12 / 1×10'},
+      {n:'Agachamento no Smith',s:'2×12',r:'2×10'},
+      {n:'Panturrilha em Pé',s:'4',r:'15'},
+      {n:'Panturrilha Sentado',s:'4',r:'15'},
+      {n:'Panturrilha no Leg Press',s:'4',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto ou Chão',s:'3',r:'30'},
+      {n:'Abdominal Inferior Banco Reto ou Chão',s:'3',r:'20'},
+    ]},
+    {id:'d2',name:'Dia 2 – Peito / Braços',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Crucifixo Inclinado c/ Halter',s:'2×15',r:'2×12'},
+      {n:'Supino Inclinado no Smith',s:'2×12',r:'2×10'},
+      {n:'Supino Reto no Smith',s:'2×12',r:'2×10'},
+      {n:'Paralelas',s:'4',r:'8'},
+      {n:'Rosca Direta c/ Barra W',s:'2',r:'12'},
+      {n:'Rosca Scott Máquina',s:'2×12',r:'2×10'},
+      {n:'Rosca Alternada c/ Isometria',s:'4',r:'10'},
+      {n:'Rosca Inversa c/ Barra W',s:'4',r:'12'},
+      {n:'Tríceps Pulley Corda',s:'2×15',r:'2×12'},
+      {n:'Tríceps Testa',s:'4',r:'12'},
+      {n:'Tríceps Francês Sentado',s:'4',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia 3 – Costas / Ombros',rest:'45s–1min séries / 2min exercícios',
+     exercises:[
+      {n:'Puxador Alto Aberto Pegada Pronada',s:'2×15',r:'2×12'},
+      {n:'Puxador Alto c/ Triângulo',s:'2×15',r:'2×12'},
+      {n:'Remada Curvada Pronada',s:'2×12',r:'2×10'},
+      {n:'Remada Unilateral',s:'4',r:'12'},
+      {n:'Remada Baixa c/ Triângulo',s:'2×12',r:'2×10'},
+      {n:'Hiperextensão de Lombar',s:'4',r:'20'},
+      {n:'Desenvolvimento Sentado c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Elevação Frontal c/ Halter',s:'4',r:'12'},
+      {n:'Elevação Lateral c/ Halter',s:'4',r:'12'},
+      {n:'Crucifixo Máquina Inverso',s:'2×15',r:'2×12'},
+      {n:'Encolhimento c/ Halter',s:'4',r:'13'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d4',name:'Dia 4 – Treino Dia 1',repeat:1},
+    {id:'d5',name:'Dia 5 – Treino Dia 2',repeat:2},
+    {id:'d6',name:'Dia 6 – Treino Dia 3',repeat:3},
+    {id:'d7',name:'Dia 7 – Descanso',rest_day:true},
+  ]
+},
+{
+  id:'ini3', cat:'Iniciante', name:'Iniciante 3', weeks:'8 semanas',
+  scheduleNote:'6 dias / semana. Dia 7: descanso.',
+  days:[
+    {id:'d1',name:'Dia 1 – Pernas',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Adutora',s:'3×12',r:'+ 1×Drop (10/10/10)',note:'Drop Set Decrescente'},
+      {n:'Cadeira Abdutora',s:'3×12',r:'+ 1×Drop (10/10/10)',note:'Drop Set Decrescente'},
+      {n:'Elevação Pélvica c/ Barra',s:'2×15',r:'2×12'},
+      {n:'Mesa Flexora',s:'2×15',r:'2×12 / 2×10'},
+      {n:'Cadeira Extensora',s:'3×12',r:'+ 1×Drop (10/10/10)',note:'Drop Set Decrescente'},
+      {n:'Avanço no Smith',s:'2×12',r:'2×10'},
+      {n:'Leg Press – Pés Paralelos',s:'2×15',r:'2×12 / 2×10'},
+      {n:'Panturrilha em Pé',s:'6',r:'15'},
+      {n:'Panturrilha no Leg Press c/ pés paralelos',s:'6',r:'15'},
+      {n:'Prancha Abdominal',s:'3',r:'2 min cada'},
+      {n:'Abdominal Crunch Banco Reto c/ Peso',s:'4',r:'30'},
+    ]},
+    {id:'d2',name:'Dia 2 – Peito / Braços',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Supino Inclinado no Smith',s:'2×12',r:'2×10 / 1×8'},
+      {n:'Supino Reto c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Crucifixo Reto c/ Halter',s:'4',r:'12'},
+      {n:'Paralelas',s:'4',r:'10'},
+      {n:'Rosca Scott Máquina c/ Barra W',s:'2×12',r:'2×10'},
+      {n:'Pulley c/ Barra W',s:'4',r:'10'},
+      {n:'Rosca Alternada Sentado c/ Isometria',s:'4',r:'10'},
+      {n:'Tríceps Francês c/ Halter Sentado',s:'4',r:'12'},
+      {n:'Rosca Concentrada',s:'4',r:'12'},
+      {n:'Rosca Inversa c/ Barra W',s:'3',r:'15'},
+      {n:'Prancha Abdominal',s:'3',r:'2 min cada'},
+      {n:'Abdominal Crunch Banco Reto c/ Peso',s:'4',r:'30'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia 3 – Costas / Ombros',rest:'45s–1min séries / 2min exercícios',
+     exercises:[
+      {n:'Pull Down c/ Corda em Pé',s:'4',r:'15'},
+      {n:'Puxador Alto Aberto Pronado',s:'2×12',r:'2×10'},
+      {n:'Puxador Alto Fechado Supinado',s:'2×12',r:'2×10'},
+      {n:'Remada Curvada com Halteres',s:'2×12',r:'2×10'},
+      {n:'Remada Baixa c/ Triângulo',s:'3×12',r:'+ 1×Drop (10/10/10)',note:'Drop Set Decrescente'},
+      {n:'Hiperextensão de Lombar',s:'4',r:'20'},
+      {n:'Crucifixo Máquina Inverso',s:'4',r:'15'},
+      {n:'Elevação Lateral c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Desenvolvimento com Halteres',s:'2×12',r:'2×10'},
+      {n:'Prancha Abdominal',s:'3',r:'2 min cada'},
+      {n:'Abdominal Crunch Banco Reto c/ Peso',s:'4',r:'30'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d4',name:'Dia 4 – Pernas',repeat:1},
+    {id:'d5',name:'Dia 5 – Peito / Braços',repeat:2},
+    {id:'d6',name:'Dia 6 – Costas / Ombros',repeat:3},
+    {id:'d7',name:'Dia 7 – Descanso',rest_day:true},
+  ]
+},
+{
+  id:'int1', cat:'Intermediário', name:'Intermediário 1', weeks:'4 semanas',
+  scheduleNote:'3 dias de treino + descanso, depois reinicia.',
+  obs:'Se você veio do módulo iniciante, vá direto para o Intermediário 3.',
+  days:[
+    {id:'d1',name:'Dia 1 – Pernas',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Adutora',s:'2×15',r:'2×12'},
+      {n:'Cadeira Abdutora',s:'2×15',r:'2×12'},
+      {n:'Elevação Pélvica c/ Barra',s:'3×15',r:'2×12'},
+      {n:'Cadeira Extensora',s:'2×15',r:'2×12'},
+      {n:'Mesa Flexora',s:'3×15',r:'2×12'},
+      {n:'Leg Press – Pés Paralelos',s:'2×15',r:'2×12 / 1×10'},
+      {n:'Agachamento no Smith',s:'2×12',r:'2×10'},
+      {n:'Panturrilha em Pé',s:'4',r:'15'},
+      {n:'Panturrilha Sentado',s:'4',r:'15'},
+      {n:'Panturrilha no Leg Press',s:'4',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'30'},
+      {n:'Abdominal Inferior Banco Reto',s:'3',r:'20'},
+    ]},
+    {id:'d2',name:'Dia 2 – Peito / Bíceps / Tríceps',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Crucifixo Inclinado c/ Halter',s:'2×15',r:'2×12'},
+      {n:'Supino Inclinado no Smith',s:'2×12',r:'2×10'},
+      {n:'Supino Reto no Smith',s:'2×12',r:'2×10'},
+      {n:'Paralelas',s:'4',r:'8'},
+      {n:'Rosca Direta c/ Barra W',s:'2',r:'12'},
+      {n:'Rosca Scott Máquina',s:'2×12',r:'2×10'},
+      {n:'Rosca Alternada c/ Isometria',s:'4',r:'10'},
+      {n:'Rosca Inversa c/ Barra W',s:'4',r:'12'},
+      {n:'Tríceps Pulley Corda',s:'2×15',r:'2×12'},
+      {n:'Tríceps Testa',s:'4',r:'12'},
+      {n:'Tríceps Francês Sentado',s:'4',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia 3 – Costas / Ombros',rest:'45s–1min séries / 2min exercícios',
+     exercises:[
+      {n:'Puxador Alto Aberto Pegada Pronada',s:'2×15',r:'2×12'},
+      {n:'Puxador Alto c/ Triângulo',s:'2×15',r:'2×12'},
+      {n:'Remada Curvada Pronada',s:'2×12',r:'2×10'},
+      {n:'Remada Unilateral',s:'4',r:'12'},
+      {n:'Remada Baixa c/ Triângulo',s:'2×12',r:'2×10'},
+      {n:'Hiperextensão de Lombar',s:'4',r:'20'},
+      {n:'Desenvolvimento Sentado c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Elevação Frontal c/ Halter',s:'4',r:'12'},
+      {n:'Elevação Lateral c/ Halter',s:'4',r:'12'},
+      {n:'Crucifixo Máquina Inverso',s:'2×15',r:'2×12'},
+      {n:'Encolhimento c/ Halter',s:'4',r:'13'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d4',name:'Dia 4 – Descanso',rest_day:true},
+  ]
+},
+{
+  id:'int2', cat:'Intermediário', name:'Intermediário 2', weeks:'4 semanas (semanas 5–8)',
+  scheduleNote:'4 dias de treino + descanso, depois reinicia.',
+  obs:'Carga progressiva em cada série.',
+  days:[
+    {id:'d1',name:'Dia 1 – Pernas',rest:'Varia por exercício (ver abaixo)',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Adutora',s:'5',r:'10',note:'30s entre séries'},
+      {n:'Cadeira Abdutora',s:'5',r:'10',note:'30s entre séries'},
+      {n:'Elevação Pélvica c/ Barra',s:'3×15',r:'2×12 / 2×10',note:'1min entre séries'},
+      {n:'Cadeira Extensora',s:'2×15',r:'2×12',note:'30s entre séries'},
+      {n:'Avanço no Smith',s:'4',r:'14',note:'2min entre séries'},
+      {n:'Leg Press – Pés Paralelos',s:'2×15',r:'2×12 / 1×10',note:'2min entre séries'},
+      {n:'Agachamento no Smith',s:'2×12',r:'2×10',note:'2min entre séries'},
+      {n:'Panturrilha em Pé',s:'4',r:'15',note:'1min entre séries'},
+      {n:'Panturrilha Sentado',s:'4',r:'15',note:'1min entre séries'},
+      {n:'Panturrilha no Leg Press',s:'4',r:'15',note:'1min entre séries'},
+    ]},
+    {id:'d2',name:'Dia 2 – Peito / Tríceps',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Crucifixo Inclinado c/ Halter',s:'2×15',r:'2×12'},
+      {n:'Supino Inclinado c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Supino Reto no Smith',s:'2×12',r:'2×10'},
+      {n:'Pulôver',s:'4',r:'12'},
+      {n:'Cross Over',s:'4',r:'15'},
+      {n:'Tríceps Pulley Barra Reta Pronada',s:'2×15',r:'2×12'},
+      {n:'Tríceps Pulley Corda',s:'2×15',r:'2×12'},
+      {n:'Tríceps Testa c/ Barra W',s:'4',r:'12'},
+      {n:'Tríceps Francês Sentado',s:'4',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia 3 – Costas',rest:'45s–1min séries / 2min exercícios',
+     exercises:[
+      {n:'Barra Fixa Peito',s:'4',r:'10'},
+      {n:'Puxador Alto Fechado Supinado',s:'2×15',r:'2×12'},
+      {n:'Puxador Alto c/ Triângulo',s:'2×12',r:'2×10'},
+      {n:'Remada Curvada Pronada',s:'2×12',r:'2×10'},
+      {n:'Remada Unilateral',s:'4',r:'12'},
+      {n:'Remada Baixa c/ Triângulo',s:'2×12',r:'2×10'},
+      {n:'Terra',s:'4',r:'8'},
+      {n:'Hiperextensão Lombar',s:'4',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d4',name:'Dia 4 – Ombro / Bíceps',rest:'1min séries / 2min exercícios',
+     obs:'Carga progressiva em cada série.',
+     exercises:[
+      {n:'Elevação Lateral c/ Halter',s:'2×15',r:'2×12'},
+      {n:'Desenvolvimento Sentado c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Elevação Frontal c/ Barra Pronada',s:'4',r:'12'},
+      {n:'Crucifixo Máquina Inverso',s:'2×15',r:'2×12'},
+      {n:'Encolhimento c/ Halter',s:'4',r:'12'},
+      {n:'Rosca Direta c/ Barra W',s:'2×12',r:'2×10'},
+      {n:'Rosca Scott Máquina',s:'2×12',r:'2×10'},
+      {n:'Rosca Alternada c/ Isometria',s:'4',r:'10'},
+      {n:'Rosca Inversa c/ Barra W',s:'4',r:'12'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d5',name:'Dia 5 – Descanso',rest_day:true},
+  ]
+},
+{
+  id:'int3', cat:'Intermediário', name:'Intermediário 3', weeks:'8 semanas',
+  scheduleNote:'4 dias rotativos. Descanso aos domingos. Carga progressiva.',
+  obs:'Treino de 4 dias rotativo, descanso aos domingos.',
+  days:[
+    {id:'d1',name:'Dia A – Pernas',rest:'Varia por exercício',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Adutora',s:'5',r:'15',note:'30s entre séries'},
+      {n:'Cadeira Abdutora',s:'5',r:'15',note:'30s entre séries'},
+      {n:'Elevação Pélvica c/ Barra',s:'2×12',r:'2×10'},
+      {n:'Cadeira Extensora',s:'3×Drop',r:'(10/10/10)',note:'Drop Set Decrescente – 1min'},
+      {n:'Mesa Flexora',s:'4',r:'12',note:'2min'},
+      {n:'Agachamento no Smith',s:'2×12',r:'2×10',note:'2min'},
+      {n:'Avanço no Smith',s:'4',r:'12',note:'2min'},
+      {n:'Leg Press – Pés Paralelos',s:'2×15',r:'2×12 / 1×10',note:'2min'},
+      {n:'Panturrilha em Pé',s:'4',r:'15',note:'1min'},
+      {n:'Panturrilha Sentado',s:'4',r:'20',note:'1min'},
+      {n:'Panturrilha no Leg Press',s:'4',r:'15',note:'1min'},
+    ]},
+    {id:'d2',name:'Dia B – Peito / Tríceps',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Supino Inclinado c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Crucifixo Inclinado Cabo',s:'2×15',r:'2×12'},
+      {n:'Supino Reto no Smith',s:'2×12',r:'2×10'},
+      {n:'Pulôver + Paralelas',s:'4',r:'10',note:'Superset'},
+      {n:'Tríceps Pulley Corda',s:'2×15',r:'2×12'},
+      {n:'Tríceps Francês Unilateral Sentado c/ Halter',s:'2×15',r:'2×12'},
+      {n:'Tríceps Testa c/ Barra W (Banco 45°)',s:'4',r:'12'},
+      {n:'Prancha Abdominal',s:'3',r:'2 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'4',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia C – Costas / Femorais',rest:'45s–1min séries / 2min exercícios',
+     exercises:[
+      {n:'Barra Fixa Peito',s:'4',r:'10'},
+      {n:'Remada Curvada com Halteres',s:'2×12',r:'2×10'},
+      {n:'Puxador Alto c/ Triângulo',s:'3×12',r:'+ 1×Drop (10/10/10)',note:'Drop Set'},
+      {n:'Remada Unilateral c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Remada Baixa c/ Barra Reta Supinada',s:'2×12',r:'2×10'},
+      {n:'Terra',s:'1×12',r:'1×10 / 1×8 / 1×6',note:'Carga progressiva'},
+      {n:'Flexor Deitado',s:'4',r:'12'},
+      {n:'Flexor Sentado',s:'4',r:'20'},
+      {n:'Hiperextensão de Lombar',s:'4',r:'20'},
+      {n:'Panturrilha Sentado',s:'4',r:'20'},
+      {n:'Panturrilha no Leg Press',s:'4',r:'15'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d4',name:'Dia D – Ombro / Bíceps',rest:'1min séries / 2min exercícios',
+     obs:'Carga progressiva em cada série.',
+     exercises:[
+      {n:'Aquecer Manguito Rotador',s:'—',r:'—',note:'Exercício de ativação'},
+      {n:'Elevação Frontal c/ Barra Pronada em Pé',s:'2×15',r:'2×12'},
+      {n:'Desenvolvimento Frontal',s:'2×12',r:'2×10'},
+      {n:'Desenvolvimento com Halter',s:'2×12',r:'2×10'},
+      {n:'Crucifixo Máquina Inverso',s:'3×12',r:'+ 1×Drop (10/10/10)',note:'Drop Set'},
+      {n:'Remada por Trás no Smith em Pé',s:'4',r:'12'},
+      {n:'Rosca Concentrada',s:'2×12',r:'2×10'},
+      {n:'Rosca Scott Máquina',s:'2×12',r:'2×10'},
+      {n:'Rosca Alternada em Pé',s:'4',r:'12'},
+      {n:'Rosca Inversa c/ Barra W',s:'4',r:'12'},
+      {n:'Prancha Abdominal',s:'3',r:'2 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'4',r:'30'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+  ]
+},
+{
+  id:'av1', cat:'Avançado', name:'Avançado 1', weeks:'8 semanas',
+  scheduleNote:'6 dias de treino + 1 descanso/mobilidade.',
+  obs:'Carga progressiva em cada série.',
+  days:[
+    {id:'d1',name:'Dia 1 – Pernas (Quadríceps)',rest:'Varia por exercício',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Adutora',s:'10',r:'10',note:'10s entre séries'},
+      {n:'Cadeira Abdutora',s:'10',r:'10',note:'10s entre séries'},
+      {n:'Elevação Pélvica c/ Barra',s:'3×15',r:'2×12 + 1×Drop(10-10-10)',note:'1min'},
+      {n:'Cadeira Extensora',s:'3×Drop',r:'(10-10-10)',note:'1min – Drop Set'},
+      {n:'Agachamento no Smith',s:'2×12',r:'2×10 / 1×8',note:'2min'},
+      {n:'Avanço no Smith',s:'2×12',r:'2×10',note:'2min'},
+      {n:'Leg Press – Pés Paralelos',s:'2×15',r:'2×12 + 1×Drop(10-10-10)',note:'2–3min'},
+      {n:'Panturrilha em Pé',s:'10',r:'10',note:'10s entre séries'},
+      {n:'Panturrilha Sentado',s:'10',r:'10',note:'10s entre séries'},
+    ]},
+    {id:'d2',name:'Dia 2 – Peito / Tríceps',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Crucifixo Inclinado c/ Halter',s:'2×15',r:'2×12'},
+      {n:'Supino Inclinado c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Supino Reto c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Cross Over',s:'4',r:'15'},
+      {n:'Supino Fechado c/ Barra W',s:'4',r:'12'},
+      {n:'Tríceps Pulley Corda',s:'2×15',r:'2×12'},
+      {n:'Tríceps Testa c/ Barra W',s:'4',r:'12'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia 3 – Costas',rest:'45s–1min séries / 2min exercícios',
+     exercises:[
+      {n:'Barra Fixa Peito',s:'4',r:'10'},
+      {n:'Puxador Alto Fechado Supinado',s:'2×15',r:'2×12'},
+      {n:'Puxador Alto c/ Triângulo',s:'2×15',r:'2×12'},
+      {n:'Remada Curvada Pronada',s:'2×12',r:'2×10'},
+      {n:'Remada Unilateral',s:'4',r:'12'},
+      {n:'Remada Baixa c/ Triângulo',s:'4×Drop',r:'(10-10-10)',note:'Drop Set'},
+      {n:'Terra',s:'4',r:'8'},
+      {n:'Encolhimento c/ Halter',s:'4',r:'15'},
+      {n:'Hiperextensão Lombar',s:'4',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d4',name:'Dia 4 – Descanso + Cardio',rest:'—',rest_day:false,
+     exercises:[
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true,note:'Apenas cardio'},
+    ]},
+    {id:'d5',name:'Dia 5 – Pernas (Posterior)',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Adutora',s:'5',r:'12',note:'30s entre séries'},
+      {n:'Cadeira Abdutora',s:'5',r:'12',note:'30s entre séries'},
+      {n:'Elevação Pélvica c/ Barra',s:'4×15',r:'+ 1×Drop(10-10-10)',note:'1min'},
+      {n:'Avanço no Smith',s:'2×15',r:'2×12'},
+      {n:'Mesa Flexora',s:'2×15',r:'2×12'},
+      {n:'Flexor com Halter',s:'4',r:'12'},
+      {n:'Stiff',s:'4',r:'15'},
+      {n:'Leg Press Unilateral',s:'4',r:'15 cada lado'},
+      {n:'Panturrilha Sentado',s:'10',r:'10',note:'10s entre séries'},
+      {n:'Panturrilha em Pé',s:'10',r:'10',note:'10s entre séries'},
+    ]},
+    {id:'d6',name:'Dia 6 – Ombro / Bíceps',rest:'1min séries / 2min exercícios',
+     obs:'Carga progressiva em cada série.',
+     exercises:[
+      {n:'Elevação Lateral c/ Halter',s:'1×15',r:'2×12 + 1×Drop(10-10-10)',note:'Drop Set'},
+      {n:'Desenvolvimento Sentado c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Desenvolvimento Frontal c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Crucifixo Máquina Inverso',s:'2×15',r:'1×12 + 1×Drop(10-10-10)',note:'Drop Set'},
+      {n:'Encolhimento c/ Halter',s:'4',r:'12'},
+      {n:'Rosca Concentrada',s:'4',r:'12'},
+      {n:'Rosca Scott Máquina',s:'5',r:'10'},
+      {n:'Rosca Alternada',s:'4',r:'12'},
+      {n:'Rosca Inversa c/ Barra W',s:'4',r:'12'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'20'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d7',name:'Dia 7 – Descanso / Mobilidade',rest_day:true,note:'Módulo de Mobilidade e Alongamento'},
+  ]
+},
+{
+  id:'av2', cat:'Avançado', name:'Avançado 2', weeks:'8 semanas',
+  scheduleNote:'6 dias de treino + 1 descanso.',
+  obs:'Carga progressiva em cada série.',
+  days:[
+    {id:'d1',name:'Dia 1 – Pernas (Quadríceps)',rest:'Varia por exercício',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Elevação Pélvica c/ Barra',s:'10',r:'10',note:'10s entre séries'},
+      {n:'Cadeira Adutora + Cadeira Abdutora',s:'5×12',r:'+ 5×12',note:'Superset – 10s descanso'},
+      {n:'Mesa Flexora',s:'4',r:'12',note:'1min'},
+      {n:'Cadeira Extensora',s:'4',r:'12',note:'1min'},
+      {n:'Agachamento no Smith',s:'2×12',r:'2×10 / 1×8',note:'2min'},
+      {n:'Leg Press – Pirâmide Crescente + Decrescente',s:'3',r:'15/20/25/30 → 25/20/15',note:'1min entre séries'},
+      {n:'Passadas Livres sem Peso',s:'3',r:'50 passos',note:'10s entre séries'},
+      {n:'Panturrilha em Pé + Panturrilha Sentado',s:'8×15',r:'alternado',note:'1min'},
+    ]},
+    {id:'d2',name:'Dia 2 – Peito / Tríceps',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Crucifixo Inclinado Cabo + Supino Inclinado',s:'2×12',r:'+ 2×10',note:'Superset'},
+      {n:'Supino Reto c/ Halter',s:'2×12',r:'2×10'},
+      {n:'Cross Over',s:'4',r:'15'},
+      {n:'Paralelas',s:'4',r:'10'},
+      {n:'Tríceps Testa c/ Barra W',s:'4',r:'12'},
+      {n:'Tríceps Francês Sentado Unilateral',s:'4',r:'12'},
+      {n:'Tríceps Pulley c/ Barra W',s:'3×Drop',r:'(10/10/10)',note:'Drop Set'},
+      {n:'Prancha Abdominal',s:'4',r:'2 min cada'},
+      {n:'Abdominal Crunch Banco Reto com Peso',s:'4',r:'40'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia 3 – Costas',rest:'45s–1min séries / 2min exercícios',
+     exercises:[
+      {n:'Pull Down Corda Banco 45° (peito apoiado)',s:'4',r:'15'},
+      {n:'Barra Fixa Peito',s:'4',r:'10'},
+      {n:'Puxador Alto c/ Triângulo',s:'2×15',r:'2×12'},
+      {n:'Remada Curvada Pronada',s:'2×12',r:'2×10'},
+      {n:'Remada Curvada 45° c/ Halter (peito apoiado)',s:'2×12',r:'2×10'},
+      {n:'Remada Baixa c/ Corda',s:'4×Drop',r:'(10/10/10)',note:'Drop Set'},
+      {n:'Encolhimento com Halter',s:'4',r:'15'},
+      {n:'Hiperextensão Lombar',s:'4',r:'20'},
+      {n:'Panturrilha em Pé + Panturrilha Sentado',s:'8×15',r:'alternado',note:'1min'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d4',name:'Dia 4 – Cardio + Abdominal',rest:'—',
+     exercises:[
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+      {n:'Prancha Abdominal',s:'4',r:'2 min cada'},
+      {n:'Abdominal Crunch Banco Reto com Peso',s:'4',r:'40'},
+    ]},
+    {id:'d5',name:'Dia 5 – Pernas (Posterior)',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Cadeira Adutora',s:'5',r:'12',note:'1min'},
+      {n:'Elevação Pélvica c/ Barra',s:'1×Drop',r:'(10/10/10)'},
+      {n:'Mesa Flexora',s:'2×15',r:'2×12'},
+      {n:'Flexor com Halter',s:'4',r:'12'},
+      {n:'Cadeira Flexora',s:'4',r:'12'},
+      {n:'Stiff com Halter',s:'4',r:'15'},
+      {n:'Sumô com Halter',s:'4',r:'12'},
+      {n:'Passadas Livres sem Peso',s:'4',r:'50 passos'},
+      {n:'Panturrilha em Pé + Panturrilha Sentado',s:'8×15',r:'alternado',note:'1min'},
+    ]},
+    {id:'d6',name:'Dia 6 – Ombro / Bíceps',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Elevação Lateral c/ Halter',s:'4×Drop',r:'(10-10-10)',note:'Drop Set'},
+      {n:'Elevação Frontal Neutro Cabo com Corda',s:'4',r:'12'},
+      {n:'Desenvolvimento Frontal c/ 1 Halter',s:'2×12',r:'2×10'},
+      {n:'Desenvolvimento Sentado',s:'2×12',r:'2×10'},
+      {n:'Crucifixo Máquina Inverso + Encolhimento c/ Halter',s:'4×12',r:'+ 4×12',note:'Superset'},
+      {n:'Rosca Spider Banco 45° c/ Halter (Simultâneo)',s:'4',r:'12'},
+      {n:'Rosca Direta Cabo c/ Barra W Banco 45°',s:'4',r:'12'},
+      {n:'Rosca Concentrada sem Apoio',s:'4',r:'12'},
+      {n:'Rosca Martelo Corda Cabo em Pé',s:'4',r:'12'},
+      {n:'Prancha Abdominal',s:'4',r:'2 min cada'},
+      {n:'Abdominal Crunch Banco Reto c/ Peso',s:'4',r:'40'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d7',name:'Dia 7 – Descanso',rest_day:true},
+  ]
+},
+{
+  id:'mul-ini1', cat:'Mulheres', name:'Feminino – Iniciante 1', weeks:'8 semanas',
+  scheduleNote:'3 dias/semana alternados.',
+  obs:'Carga progressiva em cada série.',
+  days:[
+    {id:'d1',name:'Dia 1 – Glúteo / Quadríceps / Panturrilha',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Aquecimento na Esteira + Mobilidade',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Abdutora',s:'4',r:'15/15/12/10',note:'1min entre séries'},
+      {n:'Elevação Pélvica',s:'4',r:'15/15/12/10',note:'1min entre séries'},
+      {n:'Hiperextensão de Lombar',s:'3',r:'15',note:'1min'},
+      {n:'Mesa Flexora',s:'3',r:'12',note:'1min'},
+      {n:'Flexor com Halter',s:'3',r:'12',note:'1min'},
+      {n:'Passadas Livres',s:'3',r:'30 passos',note:'1min'},
+      {n:'Panturrilha Sentado',s:'4',r:'15',note:'30s'},
+      {n:'Panturrilha em Pé',s:'4',r:'15',note:'30s'},
+    ]},
+    {id:'d2',name:'Dia 2 – Tronco / Costas / Peito / Abdominal',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Crucifixo Máquina',s:'3',r:'12'},
+      {n:'Puxador Alto Aberto Pronado',s:'3',r:'12'},
+      {n:'Pulldown Corda em Pé',s:'3',r:'12'},
+      {n:'Remada Curvada Pronada',s:'3',r:'12'},
+      {n:'Hiperextensão Lombar',s:'3',r:'12'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'30'},
+      {n:'Prancha Abdominal',s:'3',r:'1 min cada'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia 3 – Glúteo / Quadríceps / Panturrilha',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Aquecimento na Esteira + Mobilidade',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Elevação Pélvica',s:'4',r:'15/15/12/10',note:'1min'},
+      {n:'Cadeira Abdutora',s:'4',r:'15/15/12/10',note:'1min'},
+      {n:'Avanço no Smith',s:'4',r:'12/12/10/8',note:'1min'},
+      {n:'Agachamento Sumô c/ Halter',s:'4',r:'15/15/12/10',note:'1min'},
+      {n:'Leg Press c/ Pés Abduzidos',s:'4',r:'15/15/12/10',note:'1min'},
+      {n:'Cadeira Extensora',s:'4',r:'15/15/12/10',note:'1min'},
+      {n:'Panturrilha em Pé',s:'4',r:'15',note:'30s'},
+      {n:'Panturrilha Sentado',s:'4',r:'15',note:'30s'},
+    ]},
+  ]
+},
+{
+  id:'mul-av1', cat:'Mulheres', name:'Feminino – Avançado 1', weeks:'8 semanas',
+  scheduleNote:'5 dias de treino + 1 cardio + 1 descanso.',
+  obs:'Carga progressiva em cada série.',
+  days:[
+    {id:'d1',name:'Dia 1 – Glúteo / Posterior / Panturrilha',rest:'Varia por exercício',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Adutora',s:'4',r:'15',note:'30s'},
+      {n:'Cadeira Abdutora',s:'4',r:'12',note:'30s'},
+      {n:'Elevação Pélvica',s:'4×15',r:'+ 1×Drop(10-10-10)',note:'1min'},
+      {n:'Avanço no Smith',s:'2×12',r:'2×10',note:'1min'},
+      {n:'Mesa Flexora',s:'4',r:'15',note:'1min'},
+      {n:'Flexor com Halter',s:'4',r:'12',note:'1min'},
+      {n:'Stiff c/ Halter',s:'4',r:'15',note:'1min'},
+      {n:'Leg Press Unilateral',s:'4',r:'15 cada perna',note:'1min'},
+      {n:'Panturrilha em Pé',s:'10',r:'10',note:'10s'},
+      {n:'Panturrilha Sentado',s:'10',r:'10',note:'10s'},
+    ]},
+    {id:'d2',name:'Dia 2 – Peito / Tríceps / Ombro',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Supino Inclinado',s:'3',r:'15'},
+      {n:'Supino Reto c/ Halter',s:'3',r:'15'},
+      {n:'Cross Over',s:'3',r:'15'},
+      {n:'Elevação Lateral c/ Halter',s:'3',r:'15'},
+      {n:'Desenvolvimento Frontal c/ Halter',s:'3',r:'15'},
+      {n:'Desenvolvimento c/ Halteres',s:'3',r:'15'},
+      {n:'Tríceps Pulley Barra',s:'3',r:'15'},
+      {n:'Tríceps Pulley Corda',s:'3',r:'15'},
+      {n:'Tríceps Francês Sentado (unilateral)',s:'3',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'30'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia 3 – Pernas Completas',rest:'Varia por exercício',
+     exercises:[
+      {n:'Aquecimento na Esteira',s:'5 min',r:'140 BPMs',cardio:true},
+      {n:'Cadeira Extensora',s:'2×15',r:'2×12 + 1×Drop(10-10-10)',note:'2min'},
+      {n:'Leg Press – Pés Paralelos',s:'2×15',r:'2×12 + 1×Drop(10-10-10)',note:'2min'},
+      {n:'Agachamento no Smith',s:'2×12',r:'2×10 / 1×8',note:'1min'},
+      {n:'Mesa Flexora',s:'4',r:'12',note:'1min'},
+      {n:'Flexor com Halter',s:'4',r:'12',note:'1min'},
+      {n:'Stiff',s:'4',r:'15',note:'1min'},
+      {n:'Cadeira Abdutora',s:'4',r:'12',note:'30s'},
+      {n:'Elevação Pélvica',s:'4×15',r:'+ 1×Drop(10-10-10)',note:'1min'},
+      {n:'Panturrilha em Pé',s:'10',r:'10',note:'10s'},
+      {n:'Panturrilha Sentado',s:'10',r:'10',note:'10s'},
+    ]},
+    {id:'d4',name:'Dia 4 – Costas / Bíceps',rest:'45s–1min séries / 2min exercícios',
+     exercises:[
+      {n:'Puxador Alto Aberto',s:'3',r:'15'},
+      {n:'Puxador Alto c/ Triângulo',s:'3',r:'15'},
+      {n:'Remada Curvada Pronada',s:'3',r:'15'},
+      {n:'Remada Baixa c/ Triângulo',s:'3',r:'15'},
+      {n:'Hiperextensão Lombar',s:'3',r:'15'},
+      {n:'Rosca Direta com Barra W',s:'3',r:'15'},
+      {n:'Rosca Scott',s:'3',r:'15'},
+      {n:'Rosca Alternada',s:'3',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'1 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'3',r:'30'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d5',name:'Dia 5 – Glúteo / Posterior / Panturrilha',repeat:1},
+    {id:'d6',name:'Dia 6 – Cardio 45–60 min',rest:'—',
+     exercises:[
+      {n:'Cardio – Esteira',s:'45–60 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d7',name:'Dia 7 – Descanso',rest_day:true},
+  ]
+},
+{
+  id:'mul-av2', cat:'Mulheres', name:'Feminino – Avançado 2', weeks:'8 semanas',
+  scheduleNote:'6 dias de treino + 1 descanso.',
+  obs:'Carga progressiva em cada série.',
+  days:[
+    {id:'d1',name:'Dia 1 – Pernas / Panturrilha / Glúteos',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Elevação Pélvica com Barra',s:'10',r:'10',note:'10s entre séries'},
+      {n:'Cadeira Abdutora',s:'10',r:'10',note:'10s entre séries'},
+      {n:'Mesa Flexora',s:'1×15',r:'1×12 / 2×10',note:'1min'},
+      {n:'Agachamento Smith',s:'2×12',r:'2×10 / 1×8',note:'2min'},
+      {n:'Avanço no Smith',s:'2×12',r:'2×10',note:'1min'},
+      {n:'Leg Press + 40 passadas sem peso ao final',s:'2×15',r:'2×12',note:'Fazer passadas ao fim de cada série'},
+      {n:'Panturrilha em Pé + Panturrilha Sentado',s:'4×15',r:'alternado',note:'1min'},
+      {n:'Panturrilha Sentado',s:'10',r:'10',note:'10s entre séries'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d2',name:'Dia 2 – Glúteos / Peito / Costas / Abdominal',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Elevação Pélvica com Barra',s:'10',r:'10',note:'10s'},
+      {n:'Frog com Halter',s:'4',r:'15'},
+      {n:'Crucifixo Inclinado Cabo',s:'3',r:'15'},
+      {n:'Flexões de Braço',s:'4',r:'15'},
+      {n:'Pull Down Corda Banco 45° (peito apoiado)',s:'4',r:'15'},
+      {n:'Puxador Alto Pronado',s:'4',r:'15'},
+      {n:'Remada Curvada Pronada',s:'4',r:'15'},
+      {n:'Remada Baixa com Triângulo',s:'4',r:'15'},
+      {n:'Hiperextensão de Lombar',s:'4',r:'20'},
+      {n:'Prancha Abdominal',s:'3',r:'2 min cada'},
+      {n:'Abdominal Crunch Banco Reto + Peso',s:'4',r:'40'},
+      {n:'Elevações de Pernas Sentado no Banco (Canivete)',s:'4',r:'40'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d3',name:'Dia 3 – Pernas (Glúteo/Posterior)',rest:'Varia por exercício',
+     exercises:[
+      {n:'Elevação Pélvica com Barra',s:'3×12',r:'+ 1×Drop(10-10-10)',note:'1min'},
+      {n:'Frog com Halter',s:'4',r:'15',note:'1min'},
+      {n:'Cadeira Abdutora',s:'5',r:'15',note:'1min'},
+      {n:'Glúteos Cabo em Pé Perna Flexionada',s:'4',r:'15',note:'30s – cada perna completa antes de trocar'},
+      {n:'Glúteos Cabo em Pé Perna Estendida',s:'4',r:'15',note:'30s – cada perna completa antes de trocar'},
+      {n:'Flexor Deitado',s:'2×15',r:'2×12',note:'1min'},
+      {n:'Cadeira Flexora',s:'4',r:'12',note:'1min'},
+      {n:'Stiff',s:'4',r:'15',note:'1min'},
+      {n:'Panturrilha em Pé + Panturrilha Sentado',s:'8×15',r:'alternado',note:'30s'},
+      {n:'Cardio – Esteira',s:'50 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d4',name:'Dia 4 – Glúteos / Ombros / Bíceps / Tríceps',rest:'1min séries / 2min exercícios',
+     exercises:[
+      {n:'Elevação Pélvica com Barra',s:'10',r:'10',note:'10s'},
+      {n:'Frog com Halter',s:'4',r:'15'},
+      {n:'Elevação Lateral com Halter',s:'4×Drop',r:'(10-10-10)',note:'Drop Set'},
+      {n:'Elevação Frontal Neutro Cabo com Corda',s:'4',r:'12'},
+      {n:'Desenvolvimento Sentado Banco 90° Smith',s:'2×12',r:'2×10'},
+      {n:'Crucifixo Inverso Máquina',s:'4',r:'15'},
+      {n:'Rosca Scott com Barra W',s:'4',r:'15'},
+      {n:'Tríceps Testa Corda em Pé',s:'4',r:'15'},
+      {n:'Tríceps Mergulho',s:'4',r:'15'},
+      {n:'Prancha Abdominal',s:'4',r:'2 min cada'},
+      {n:'Abdominal Crunch Banco Reto',s:'4',r:'40'},
+      {n:'Cardio – Esteira',s:'30 min',r:'140–160 BPMs',cardio:true},
+    ]},
+    {id:'d5',name:'Dia 5 – Pernas / Panturrilha / Glúteos',repeat:1},
+    {id:'d6',name:'Dia 6 – Pernas (Glúteo/Posterior)',repeat:3},
+    {id:'d7',name:'Dia 7 – Descanso',rest_day:true},
+  ]
+},
+];
+
+const CATEGORIES = ['Iniciante','Intermediário','Avançado','Mulheres'];
+const CAT_COLORS = {Iniciante:'#22c55e',Intermediário:'#3b82f6',Avançado:'#f97316',Mulheres:'#ec4899'};
+
+// ===================== STATE =====================
+let state = {
+  currentPlanId: null,
+  currentDayIdx: 0,
+  checks: {}, // { planId_dayId_exIdx: bool }
+  completedWorkouts: [], // [{date,planId,dayId,dayName}]
+  calDate: new Date(),
+};
+
+function loadState(){
+  const s = localStorage.getItem('treinoAppState');
+  if(s) state = {...state,...JSON.parse(s)};
+  state.calDate = new Date();
+}
+function saveState(){
+  const toSave = {...state, calDate:undefined};
+  localStorage.setItem('treinoAppState',JSON.stringify(toSave));
+}
+
+// ===================== NAVIGATION =====================
+let currentPage = 'Home';
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page'+name).classList.add('active');
+  document.getElementById('nav'+name).classList.add('active');
+  currentPage = name;
+  document.getElementById('backBtn').style.display = 'none';
+  if(name==='Home'){document.getElementById('pageTitle').textContent='💪 Treino'; renderHome();}
+  if(name==='Treino'){document.getElementById('pageTitle').textContent='Meu Treino'; renderTreinoPage();}
+  if(name==='History'){document.getElementById('pageTitle').textContent='Histórico'; renderHistory();}
+}
+function goBack(){showPage('Home');}
+
+// ===================== HELPERS =====================
+function getPlan(id){return PLANS.find(p=>p.id===id);}
+function getDay(plan,idx){
+  const d = plan.days[idx];
+  if(d.repeat){return plan.days[d.repeat-1];}
+  return d;
+}
+function checkKey(planId,dayId,exIdx){return `${planId}_${dayId}_${exIdx}`;}
+function isChecked(planId,dayId,exIdx){return !!state.checks[checkKey(planId,dayId,exIdx)];}
+function setCheck(planId,dayId,exIdx,val){
+  state.checks[checkKey(planId,dayId,exIdx)]=val;
+  saveState();
+}
+function getDayProgress(plan,dayIdx){
+  const day = getDay(plan,dayIdx);
+  if(!day.exercises) return {done:0,total:0};
+  const total = day.exercises.length;
+  const done = day.exercises.filter((_,i)=>isChecked(plan.id,day.id,i)).length;
+  return {done,total};
+}
+function isDayComplete(plan,dayIdx){
+  const {done,total}=getDayProgress(plan,dayIdx);
+  return total>0 && done>=total;
+}
+function formatDate(d){
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function dateKey(d){return d.toISOString().slice(0,10);}
+function getStreak(){
+  if(!state.completedWorkouts.length) return 0;
+  const dates = [...new Set(state.completedWorkouts.map(w=>w.date))].sort().reverse();
+  const today = dateKey(new Date());
+  const yesterday = dateKey(new Date(Date.now()-86400000));
+  if(dates[0]!==today && dates[0]!==yesterday) return 0;
+  let streak=0, check=dates[0]===today?new Date():new Date(Date.now()-86400000);
+  for(let i=0;i<dates.length;i++){
+    if(dates[i]===dateKey(check)){streak++;check=new Date(check-86400000);}
+    else break;
+  }
+  return streak;
+}
+function getThisWeekCount(){
+  const now = new Date();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate()-now.getDay());
+  weekStart.setHours(0,0,0,0);
+  return new Set(state.completedWorkouts.filter(w=>new Date(w.date)>=weekStart).map(w=>w.date)).size;
+}
+
+// ===================== HOME =====================
+function renderHome(){
+  const streak = getStreak();
+  document.getElementById('statStreak').textContent = streak+'🔥';
+  document.getElementById('statWeek').textContent = getThisWeekCount();
+  document.getElementById('statTotal').textContent = new Set(state.completedWorkouts.map(w=>w.date)).size;
+  document.getElementById('streakDisplay').textContent = '🔥 '+streak+' dias';
+
+  const plan = getPlan(state.currentPlanId);
+  const wrap = document.getElementById('todayCardWrap');
+  if(plan){
+    const dayIdx = state.currentDayIdx||0;
+    const day = getDay(plan,dayIdx);
+    const {done,total} = getDayProgress(plan,dayIdx);
+    const pct = total>0?Math.round(done/total*100):0;
+    const dayNum = plan.days[dayIdx];
+    const isRest = dayNum.rest_day||(dayNum.repeat&&getDay(plan,dayIdx).rest_day);
+    wrap.innerHTML=`<div class="today-card" onclick="showPage('Treino')">
+      <div class="tc-label">${plan.name} • Hoje</div>
+      <div class="tc-title">${day.name}</div>
+      <div class="tc-sub">${isRest?'Dia de descanso 😴':(total?`${done}/${total} exercícios`:'Toque para ver')}</div>
+      ${total?`<div class="tc-progress">
+        <div style="display:flex;justify-content:space-between;font-size:12px;opacity:.8"><span>Progresso</span><span>${pct}%</span></div>
+        <div class="tc-progress-bar"><div class="tc-progress-fill" style="width:${pct}%"></div></div>
+      </div>`:''}
+    </div>`;
+  } else {wrap.innerHTML='';}
+
+  const planDisplay = document.getElementById('planDisplay');
+  if(plan){
+    const color = CAT_COLORS[plan.cat]||'#f97316';
+    planDisplay.innerHTML=`<div class="plan-select-btn" style="border-color:${color}40">
+      <div class="plan-dot" style="background:${color}"></div>
+      <div class="info"><div class="name">${plan.name}</div><div class="sub">${plan.weeks} • ${plan.cat}</div></div>
+      <div class="arrow" style="color:${color}">✓</div>
+    </div>`;
+  }
+}
+
+// ===================== TREINO PAGE =====================
+function renderTreinoPage(){
+  const plan = getPlan(state.currentPlanId);
+  if(!plan){
+    document.getElementById('daySelector').innerHTML='';
+    document.getElementById('dayContent').innerHTML=`<div class="empty-state"><div class="icon">🏋️</div><p>Selecione um plano na aba Início.</p></div>`;
+    return;
+  }
+  renderDaySelector(plan);
+  renderDayContent(plan, state.currentDayIdx||0);
+}
+
+function renderDaySelector(plan){
+  const sel = document.getElementById('daySelector');
+  sel.innerHTML = plan.days.map((d,i)=>{
+    const realDay = d.repeat?plan.days[d.repeat-1]:d;
+    const isRest = realDay.rest_day||d.rest_day;
+    const done = isDayComplete(plan,i);
+    let cls = 'day-pill';
+    if(i===(state.currentDayIdx||0)) cls+=' active';
+    else if(done) cls+=' done';
+    else if(isRest) cls+=' rest';
+    return `<div class="${cls}" onclick="selectDay(${i})">${d.name.replace('Treino ','').split(' – ')[0]}</div>`;
+  }).join('');
+}
+
+function selectDay(idx){
+  state.currentDayIdx = idx;
+  saveState();
+  const plan = getPlan(state.currentPlanId);
+  renderDaySelector(plan);
+  renderDayContent(plan,idx);
+}
+
+function renderDayContent(plan,dayIdx){
+  const raw = plan.days[dayIdx];
+  const day = getDay(plan,dayIdx);
+  const cont = document.getElementById('dayContent');
+
+  if(day.rest_day||raw.rest_day){
+    cont.innerHTML=`<div style="text-align:center;padding:40px 20px">
+      <div style="font-size:60px">😴</div>
+      <div style="font-size:22px;font-weight:700;margin-top:12px">Dia de Descanso</div>
+      <div style="color:var(--muted);margin-top:8px;font-size:14px">Recupere-se bem! O descanso é parte do treino.</div>
+    </div>`;
+    return;
+  }
+
+  const {done,total} = getDayProgress(plan,dayIdx);
+  const pct = total>0?Math.round(done/total*100):0;
+  const alreadyDone = state.completedWorkouts.some(w=>w.date===dateKey(new Date())&&w.planId===plan.id&&w.dayId===day.id);
+
+  let html = `<div class="day-header">
+    <h2>${day.name}</h2>
+    <div class="rest-info">⏱ ${day.rest||plan.restNote||'Ver cada exercício'}</div>
+    <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:${pct}%"></div></div>
+    <div class="progress-label"><span>Progresso</span><span id="progLabel">${done}/${total}</span></div>
+  </div>`;
+
+  if(plan.obs||raw.obs||day.obs){
+    html+=`<div class="tag-obs">💡 ${plan.obs||raw.obs||day.obs}</div>`;
+  }
+
+  if(day.exercises){
+    day.exercises.forEach((ex,i)=>{
+      const checked = isChecked(plan.id,day.id,i);
+      const sText = ex.s&&ex.r ? (ex.s.includes('×')||ex.s.includes('min')? ex.s : `${ex.s}×`) : '';
+      const rText = ex.r||'';
+      html+=`<div class="exercise-card${checked?' checked':''}${ex.note?' expandable':''}" id="exCard_${i}">
+        <div class="ex-main">
+          <div class="ex-check${checked?' checked':''}" onclick="toggleCheck('${plan.id}','${day.id}',${i},${dayIdx})">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="ex-info">
+            <div class="ex-name">${ex.n}</div>
+            <div class="ex-meta">
+              ${ex.cardio?`<span class="ex-badge cardio">🏃 ${ex.s}</span><span class="ex-badge cardio">${ex.r}</span>`:
+               `<span class="ex-badge sets">${sText}${rText} reps</span>`}
+              ${ex.note?`<span class="ex-badge" onclick="toggleExpand('exCard_${i}')">ℹ</span>`:''}
+            </div>
+          </div>
+        </div>
+        ${ex.note?`<div class="ex-expand"><div class="note">📌 ${ex.note}</div></div>`:''}
+      </div>`;
+    });
+  }
+
+  const btnLabel = alreadyDone?'✓ Treino Concluído Hoje':'Finalizar Treino';
+  html+=`<button class="complete-btn" id="completeBtnMain" onclick="completeWorkout('${plan.id}','${day.id}','${day.name}',${dayIdx})" ${alreadyDone?'disabled':''}>
+    ${btnLabel}
+  </button>
+  <button style="width:100%;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:13px;margin-top:8px" onclick="openTimer(60)">
+    ⏱ Iniciar Temporizador de Descanso
+  </button>`;
+
+  cont.innerHTML = html;
+}
+
+function toggleCheck(planId,dayId,exIdx,dayIdx){
+  const val = !isChecked(planId,dayId,exIdx);
+  setCheck(planId,dayId,exIdx,val);
+  const card = document.getElementById('exCard_'+exIdx);
+  const chk = card.querySelector('.ex-check');
+  if(val){card.classList.add('checked');chk.classList.add('checked');}
+  else{card.classList.remove('checked');chk.classList.remove('checked');}
+  // update progress
+  const plan = getPlan(planId);
+  const {done,total} = getDayProgress(plan,dayIdx);
+  const pct = total>0?Math.round(done/total*100):0;
+  const pf = document.getElementById('progFill');
+  const pl = document.getElementById('progLabel');
+  if(pf) pf.style.width=pct+'%';
+  if(pl) pl.textContent=`${done}/${total}`;
+}
+
+function toggleExpand(id){
+  document.getElementById(id).classList.toggle('expanded');
+}
+
+function completeWorkout(planId,dayId,dayName,dayIdx){
+  const today = dateKey(new Date());
+  if(!state.completedWorkouts.some(w=>w.date===today&&w.planId===planId&&w.dayId===dayId)){
+    state.completedWorkouts.push({date:today,planId,dayId,dayName});
+  }
+  // auto-advance to next day
+  const plan = getPlan(planId);
+  const nextIdx = (dayIdx+1) % plan.days.length;
+  state.currentDayIdx = nextIdx;
+  saveState();
+  document.getElementById('completeBtnMain').textContent='✓ Treino Concluído Hoje';
+  document.getElementById('completeBtnMain').disabled=true;
+  renderDaySelector(plan);
+  renderHome();
+  alert('🎉 Treino finalizado! Ótimo trabalho!');
+}
+
+// ===================== TIMER =====================
+let timerInterval=null, timerSecs=60, timerRunning=false;
+function openTimer(secs){
+  timerSecs=secs||60; timerRunning=false;
+  document.getElementById('timerDisplay').textContent=timerSecs;
+  document.getElementById('timerStartBtn').textContent='▶ Iniciar';
+  document.getElementById('timerLabel').textContent='Pronto para descansar';
+  document.getElementById('timerOverlay').classList.add('show');
+}
+function closeTimer(){
+  clearInterval(timerInterval); timerRunning=false;
+  document.getElementById('timerOverlay').classList.remove('show');
+}
+function toggleTimer(){
+  if(timerRunning){
+    clearInterval(timerInterval); timerRunning=false;
+    document.getElementById('timerStartBtn').textContent='▶ Continuar';
+  } else {
+    timerRunning=true;
+    document.getElementById('timerStartBtn').textContent='⏸ Pausar';
+    timerInterval=setInterval(()=>{
+      timerSecs--;
+      document.getElementById('timerDisplay').textContent=timerSecs;
+      if(timerSecs<=0){clearInterval(timerInterval);timerRunning=false;
+        document.getElementById('timerLabel').textContent='✅ Descanso completo!';
+        document.getElementById('timerStartBtn').textContent='▶ Reiniciar';
+        timerSecs=60;
+      }
+    },1000);
+  }
+}
+
+// ===================== PLAN PICKER =====================
+let activeCat = 'Iniciante';
+function openPlanPicker(){
+  activeCat = 'Iniciante';
+  renderCatTabs();
+  renderPlanList();
+  document.getElementById('planModal').classList.add('show');
+}
+function closePlanPicker(){document.getElementById('planModal').classList.remove('show');}
+function renderCatTabs(){
+  document.getElementById('catTabs').innerHTML=CATEGORIES.map(c=>
+    `<div class="cat-tab${c===activeCat?' active':''}" onclick="setCat('${c}')" style="${c===activeCat?'background:'+CAT_COLORS[c]+';border-color:'+CAT_COLORS[c]:''}">${c}</div>`
+  ).join('');
+}
+function setCat(c){activeCat=c;renderCatTabs();renderPlanList();}
+function renderPlanList(){
+  const plans = PLANS.filter(p=>p.cat===activeCat);
+  const color = CAT_COLORS[activeCat]||'#f97316';
+  document.getElementById('planList').innerHTML=plans.map(p=>`
+    <div class="plan-select-btn${state.currentPlanId===p.id?' active':''}" onclick="selectPlan('${p.id}')">
+      <div class="plan-dot" style="background:${color}"></div>
+      <div class="info">
+        <div class="name">${p.name}</div>
+        <div class="sub">${p.weeks} • ${p.scheduleNote}</div>
+      </div>
+      <div class="arrow">${state.currentPlanId===p.id?'✓ Ativo':'›'}</div>
+    </div>`).join('');
+}
+function selectPlan(id){
+  state.currentPlanId=id;
+  state.currentDayIdx=0;
+  saveState();
+  closePlanPicker();
+  renderHome();
+}
+
+// ===================== HISTORY =====================
+function renderHistory(){
+  renderCalendar();
+  renderHistList();
+}
+function renderCalendar(){
+  const d = state.calDate;
+  const y=d.getFullYear(), m=d.getMonth();
+  document.getElementById('calMonth').textContent=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^\w/,c=>c.toUpperCase());
+  const worked = new Set(state.completedWorkouts.map(w=>w.date));
+  const today = dateKey(new Date());
+  const first=new Date(y,m,1), last=new Date(y,m+1,0);
+  let html='<div class="cal-day-hdr">D</div><div class="cal-day-hdr">S</div><div class="cal-day-hdr">T</div><div class="cal-day-hdr">Q</div><div class="cal-day-hdr">Q</div><div class="cal-day-hdr">S</div><div class="cal-day-hdr">S</div>';
+  for(let i=0;i<first.getDay();i++) html+=`<div class="cal-day other-month"></div>`;
+  for(let day=1;day<=last.getDate();day++){
+    const dk=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    let cls='cal-day';
+    if(dk===today) cls+=' today';
+    if(worked.has(dk)) cls+=' worked';
+    html+=`<div class="${cls}">${day}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML=html;
+}
+function calPrev(){state.calDate=new Date(state.calDate.getFullYear(),state.calDate.getMonth()-1,1);renderCalendar();}
+function calNext(){state.calDate=new Date(state.calDate.getFullYear(),state.calDate.getMonth()+1,1);renderCalendar();}
+function renderHistList(){
+  const sorted=[...state.completedWorkouts].sort((a,b)=>b.date.localeCompare(a.date));
+  if(!sorted.length){
+    document.getElementById('histList').innerHTML=`<div class="empty-state"><div class="icon">📅</div><p>Nenhum treino registrado ainda.<br>Complete seu primeiro treino!</p></div>`;
+    return;
+  }
+  const grouped={};
+  sorted.forEach(w=>{if(!grouped[w.date])grouped[w.date]=[];grouped[w.date].push(w);});
+  document.getElementById('histList').innerHTML=Object.entries(grouped).map(([date,ws])=>{
+    const d=new Date(date+'T12:00:00');
+    const label=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+    return ws.map(w=>{
+      const plan=getPlan(w.planId);
+      return `<div class="hist-item">
+        <div class="hi-date">${label.replace(/^\w/,c=>c.toUpperCase())}</div>
+        <div class="hi-name">${w.dayName}</div>
+        <div class="hi-stats">
+          <span class="hi-badge">${plan?plan.name:'Plano'}</span>
+          <span class="hi-badge">${plan?plan.cat:''}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }).join('');
+}
+
+// ===================== INIT =====================
+loadState();
+renderHome();
+if(!state.currentPlanId) showPage('Home');
+</script>
+</body>
+</html>
